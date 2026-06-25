@@ -24,8 +24,8 @@ jobs:
       - name: Tests v1 
         run: go test ./... -cover
 
-  formats:      
-    name: Style 
+  style:      
+    name: Style (go fmt)
     runs-on: ubuntu-latest
 
     steps:
