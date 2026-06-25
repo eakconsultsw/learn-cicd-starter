@@ -24,8 +24,6 @@ jobs:
     
       - name: Tests v1 
         run: go test ./... -cover
-
-
   style:      
     name: Style
     runs-on: ubuntu-latest
