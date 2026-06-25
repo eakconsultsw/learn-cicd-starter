@@ -27,7 +27,7 @@ jobs:
 
 
   style:      
-    name: Style (go fmt)
+    name: Style
     runs-on: ubuntu-latest
 
     steps:
