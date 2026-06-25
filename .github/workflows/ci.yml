@@ -20,12 +20,11 @@ jobs:
 
 #      - name: print the go version 
 #        run: go version
-
+    
       - name: Tests v1 
         run: go test ./... -cover
 
-
-  formats:
+  formats:      
     name: Style 
     runs-on: ubuntu-latest
 
