@@ -1,5 +1,6 @@
 
-![Status of my tests](https://github.com/eakconsultsw/learn-cicd-starter/actions/workflows/ci.yml/badge.svg)
+![Status of my tests](https://github.com/eakconsultsw/learn-cicd-starter/actions/workflows/ci.yml/badge.svg) 
+
 
 
 # learn-cicd-starter (Notely)
