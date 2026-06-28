@@ -3,13 +3,13 @@ package main
 import (
 	"database/sql"
 	"embed"
+	"flag"
 	"io"
 	"log"
-        "flag"
 	"net/http"
-        "time"
 	"os"
-        "strconv"
+	"strconv"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
@@ -23,21 +23,22 @@ import (
 var portFlag = flag.String("port", "", "Port on which the HTTP server should listen")
 
 func getPortFromEnvOrFlag() string {
-    flag.Parse() // parses -port=... etc.
+	flag.Parse() // parses -port=... etc.
 
-    // 1️⃣ Flag‑Wert hat Vorrang
-    if *portFlag != "" {
-        return *portFlag
-    }
+	// 1️⃣ Flag‑Wert hat Vorrang
+	if *portFlag != "" {
+		return *portFlag
+	}
 
-    // 2️⃣ Dann Umgebungs‑Variable
-    if p := os.Getenv("PORT"); p != "" {
-        return p
-    }
+	// 2️⃣ Dann Umgebungs‑Variable
+	if p := os.Getenv("PORT"); p != "" {
+		return p
+	}
 
-    // 3️⃣ Fallback‑Default
-    return "8080"
+	// 3️⃣ Fallback‑Default
+	return "8080"
 }
+
 type apiConfig struct {
 	DB *database.Queries
 }
@@ -51,19 +52,19 @@ func main() {
 		log.Printf("warning: assuming default configuration. .env unreadable: %v", err)
 	}
 
-//	port := os.Getenv("PORT")
-     // … Port aus Konfiguration/CLI/Env einlesen …
-        port := getPortFromEnvOrFlag() // string
-    
-        if p, err := strconv.Atoi(port); err == nil && p > 0 && p <= 65535 {
-        // 2. Nur das geprüfte, numerische Ergebnis loggen
-           log.Println("Serving on port:", p)
-        } else {
-        // 3. Bei ungültigem Wert keinen rohen Input ausgeben
-           log.Println("Invalid port configuration – server not started")
-           return // oder geeignete Fehlerbehandlung
-        }
-        
+	//	port := os.Getenv("PORT")
+	// … Port aus Konfiguration/CLI/Env einlesen …
+	port := getPortFromEnvOrFlag() // string
+
+	if p, err := strconv.Atoi(port); err == nil && p > 0 && p <= 65535 {
+		// 2. Nur das geprüfte, numerische Ergebnis loggen
+		log.Println("Serving on port:", p)
+	} else {
+		// 3. Bei ungültigem Wert keinen rohen Input ausgeben
+		log.Println("Invalid port configuration – server not started")
+		return // oder geeignete Fehlerbehandlung
+	}
+
 	apiCfg := apiConfig{}
 
 	// https://github.com/libsql/libsql-client-go/#open-a-connection-to-sqld
@@ -118,14 +119,14 @@ func main() {
 
 	router.Mount("/v1", v1Router)
 	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: router,
-                ReadHeaderTimeout: 10 * time.Second,   // max. Zeit, die ein Header‑Teil gelesen werden darf
-                ReadTimeout:  30 * time.Second,
-                WriteTimeout: 30 * time.Second,
-                IdleTimeout:  60 * time.Second,
+		Addr:              ":" + port,
+		Handler:           router,
+		ReadHeaderTimeout: 10 * time.Second, // max. Zeit, die ein Header‑Teil gelesen werden darf
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
-        if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-           log.Fatalf("Server error: %v", err)
-       }	
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Server error: %v", err)
+	}
 }
