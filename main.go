@@ -3,10 +3,13 @@ package main
 import (
 	"database/sql"
 	"embed"
+	"flag"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
@@ -16,6 +19,25 @@ import (
 
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
+
+var portFlag = flag.String("port", "", "Port on which the HTTP server should listen")
+
+func getPortFromEnvOrFlag() string {
+	flag.Parse() // parses -port=... etc.
+
+	// 1️⃣ Flag‑Wert hat Vorrang
+	if *portFlag != "" {
+		return *portFlag
+	}
+
+	// 2️⃣ Dann Umgebungs‑Variable
+	if p := os.Getenv("PORT"); p != "" {
+		return p
+	}
+
+	// 3️⃣ Fallback‑Default
+	return "8080"
+}
 
 type apiConfig struct {
 	DB *database.Queries
@@ -30,9 +52,17 @@ func main() {
 		log.Printf("warning: assuming default configuration. .env unreadable: %v", err)
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("PORT environment variable is not set")
+	//	port := os.Getenv("PORT")
+	// … Port aus Konfiguration/CLI/Env einlesen …
+	port := getPortFromEnvOrFlag() // string
+
+	if p, err := strconv.Atoi(port); err == nil && p > 0 && p <= 65535 {
+		// 2. Nur das geprüfte, numerische Ergebnis loggen
+		log.Println("Serving on port:", p)
+	} else {
+		// 3. Bei ungültigem Wert keinen rohen Input ausgeben
+		log.Println("Invalid port configuration – server not started")
+		return // oder geeignete Fehlerbehandlung
 	}
 
 	apiCfg := apiConfig{}
@@ -89,10 +119,14 @@ func main() {
 
 	router.Mount("/v1", v1Router)
 	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: router,
+		Addr:              ":" + port,
+		Handler:           router,
+		ReadHeaderTimeout: 10 * time.Second, // max. Zeit, die ein Header‑Teil gelesen werden darf
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
-
-	log.Printf("Serving on port: %s\n", port)
-	log.Fatal(srv.ListenAndServe())
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Server error: %v", err)
+	}
 }
