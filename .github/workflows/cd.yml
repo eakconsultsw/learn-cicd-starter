@@ -33,6 +33,11 @@ jobs:
           service_account_key: ${{ secrets.GCP_CREDENTIALS }}   # JSON key
           export_default_credentials: true
 
+      - name: Verify auth
+        run: |
+          gcloud auth list
+          gcloud config get-value project
+
       - name: Configure gcloud defaults
         run: |
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
