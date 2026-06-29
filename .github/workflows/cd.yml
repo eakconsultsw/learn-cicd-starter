@@ -29,7 +29,7 @@ jobs:
       - name: Write GCP SA key to file
         id: write-key
         run: |
-          echo "${{ secrets.GCP_SA_KEY }}" > /tmp/sa-key.json
+          echo ${{ secrets.GCP_SA_KEY }} > /tmp/sa-key.json
           chmod 600 /tmp/sa-key.json
           echo "key_path=/tmp/sa-key.json" >> $GITHUB_OUTPUT
 
@@ -40,7 +40,7 @@ jobs:
         run: |
           gcloud auth activate-service-account \
             cloud-run-deployer@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
-            --key-file="${{ steps.write-key.outputs.key_path }}"
+            --key-file=${{ steps.write-key.outputs.key_path }}
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
         env:
           CLOUDSDK_CORE_DISABLE_PROMPTS: "1"
