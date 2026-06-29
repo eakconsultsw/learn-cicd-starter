@@ -6,8 +6,8 @@ on:
 
 
 jobs:
-  deploy:
-    name: Deploy
+  build-and-deploy:
+    name: Build-Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -20,7 +20,37 @@ jobs:
           go-version: "1.26.0"
 
       - name: build the app
-        run: scripts/buildprod.sh
+        run: |
+          # all envs set ??
+          ./scripts/buildprod.sh
 
-      
+ # ---------------------------------------------------------------
+    # 2️⃣  Install & configure the gcloud CLI, authenticate with GCP
+    # ---------------------------------------------------------------
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_CREDENTIALS }}   # JSON key
+          export_default_credentials: true
+
+      - name: Configure gcloud defaults
+        run: |
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          gcloud config set compute/region ${{ secrets.GCP_REGION }}
+
+    # ---------------------------------------------------------------
+    # 3️⃣  Build Docker image with Cloud Build & push to Artifact Registry
+    # ---------------------------------------------------------------
+      - name: Build & push Docker image to Artifact Registry
+        env:
+          REGION:     ${{ secrets.GCP_REGION }}          # e.g. europe-west1
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          REPOSITORY: ${{ secrets.ARTIFACT_REPO }}       # name of the AR repo
+          IMAGE:      ${{ secrets.IMAGE_NAME }}          # desired image name
+          TAG:        ${{ github.sha }}                  # or any tag you prefer
+        run: |
+          FULL_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${TAG}"
+          echo "Building and pushing ${FULL_TAG}"
+          gcloud builds submit --tag "${FULL_TAG}" .           
 
